@@ -5,24 +5,39 @@ export interface ConvertOptions {
     format: ImageFormat;
     quality?: number;
 };
+export interface FlipOptions extends ConvertOptions {
+    isHorizontal: boolean;
+    isVertical: boolean;
+}
 export interface ResizeOptions extends ConvertOptions {
     width: number;
     height: number;
 }
 
+export interface ManipulateOptions {
+    format: ImageFormat;
+    width: number;
+    height: number;
+    quality?: number;
+}
+
 export async function convert(source: ImageSource, options: ConvertOptions): Promise<Blob> {
     const image: HTMLImageElement = await loadImage(source);
-    const resizeOptions: ResizeOptions = {
+    const manipulateOptions: ResizeOptions = {
         ...options,
         width: image.width,
         height: image.height
     }
-    return await resize(source, resizeOptions);
+    return await manipulate(source, manipulateOptions);
 }
 
 export async function resize(source: ImageSource, options: ResizeOptions): Promise<Blob> {
+    return await manipulate(source, options);
+}
+
+export async function manipulate(source: ImageSource, options: ManipulateOptions): Promise<Blob> {
     const image: HTMLImageElement = await loadImage(source);
-    const { format, quality = 0.9, width, height } = options;
+    const { format, width, height, quality = 0.9 } = options;
 
     const [canvas, context] = createCanvas(width, height);
     context.drawImage(image, 0, 0, width, height);
