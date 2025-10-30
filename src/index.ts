@@ -9,6 +9,9 @@ export interface FlipOptions extends ConvertOptions {
     horizontally: boolean;
     vertically: boolean;
 }
+export interface RotateOptions extends ConvertOptions {
+    angle: number;
+}
 export interface ResizeOptions extends ConvertOptions {
     width: number;
     height: number;
@@ -21,6 +24,7 @@ export interface ManipulateOptions {
     quality?: number;
     flipHorizontally?: boolean;
     flipVertically?: boolean;
+    rotateAngle?: number;
 }
 
 export async function convert(source: ImageSource, options: ConvertOptions): Promise<Blob> {
@@ -45,18 +49,28 @@ export async function flip(source: ImageSource, options: FlipOptions): Promise<B
     return await manipulate(source, manipulateOptions);
 }
 
+export async function rotate(source: ImageSource, options: RotateOptions): Promise<Blob> {
+    const image: HTMLImageElement = await loadImage(source);
+    const manipulateOptions: ManipulateOptions = {
+        ...options,
+        width: image.width,
+        height: image.height,
+        rotateAngle: options.angle,
+    }
+    return await manipulate(source, manipulateOptions);
+}
+
 export async function resize(source: ImageSource, options: ResizeOptions): Promise<Blob> {
     return await manipulate(source, options);
 }
 
 export async function manipulate(source: ImageSource, options: ManipulateOptions): Promise<Blob> {
     const image: HTMLImageElement = await loadImage(source);
-    const { format, width, height, quality = 0.9, flipHorizontally = false, flipVertically = false } = options;
+    const { format, width, height, quality = 0.9, flipHorizontally = false, flipVertically = false, rotateAngle = 0 } = options;
 
     const [canvas, context] = createCanvas(width, height);
 
     context.translate(canvas.width / 2, canvas.height / 2);
-    context.drawImage(image, -image.width / 2, -image.height / 2);
 
     if (flipHorizontally || flipVertically) {
         const horizontalScale = flipHorizontally ? -1 : 1;
@@ -64,6 +78,11 @@ export async function manipulate(source: ImageSource, options: ManipulateOptions
         context.scale(horizontalScale, verticalScale);
     }
 
+    if (rotateAngle !== 0) {
+        context.rotate(rotateAngle);
+    }
+
+    context.drawImage(image, -image.width / 2, -image.height / 2);
     return await canvasToBlob(canvas, { format, quality });
 }
 
