@@ -6,8 +6,8 @@ export interface ConvertOptions {
     quality?: number;
 };
 export interface FlipOptions extends ConvertOptions {
-    isHorizontal: boolean;
-    isVertical: boolean;
+    horizontally: boolean;
+    vertically: boolean;
 }
 export interface ResizeOptions extends ConvertOptions {
     width: number;
@@ -19,14 +19,28 @@ export interface ManipulateOptions {
     width: number;
     height: number;
     quality?: number;
+    flipHorizontally?: boolean;
+    flipVertically?: boolean;
 }
 
 export async function convert(source: ImageSource, options: ConvertOptions): Promise<Blob> {
     const image: HTMLImageElement = await loadImage(source);
-    const manipulateOptions: ResizeOptions = {
+    const manipulateOptions: ManipulateOptions = {
         ...options,
         width: image.width,
         height: image.height
+    }
+    return await manipulate(source, manipulateOptions);
+}
+
+export async function flip(source: ImageSource, options: FlipOptions): Promise<Blob> {
+    const image: HTMLImageElement = await loadImage(source);
+    const manipulateOptions: ManipulateOptions = {
+        ...options,
+        width: image.width,
+        height: image.height,
+        flipHorizontally: options.horizontally,
+        flipVertically: options.vertically,
     }
     return await manipulate(source, manipulateOptions);
 }
@@ -37,10 +51,18 @@ export async function resize(source: ImageSource, options: ResizeOptions): Promi
 
 export async function manipulate(source: ImageSource, options: ManipulateOptions): Promise<Blob> {
     const image: HTMLImageElement = await loadImage(source);
-    const { format, width, height, quality = 0.9 } = options;
+    const { format, width, height, quality = 0.9, flipHorizontally = false, flipVertically = false } = options;
 
     const [canvas, context] = createCanvas(width, height);
-    context.drawImage(image, 0, 0, width, height);
+
+    context.translate(canvas.width / 2, canvas.height / 2);
+    context.drawImage(image, -image.width / 2, -image.height / 2);
+
+    if (flipHorizontally || flipVertically) {
+        const horizontalScale = flipHorizontally ? -1 : 1;
+        const verticalScale = flipVertically ? -1 : 1;
+        context.scale(horizontalScale, verticalScale);
+    }
 
     return await canvasToBlob(canvas, { format, quality });
 }
