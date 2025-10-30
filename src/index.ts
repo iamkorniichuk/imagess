@@ -1,48 +1,38 @@
 export type ImageFormat = 'image/png' | 'image/jpeg' | 'image/webp' | 'image/avif';
-export type ImageSource = HTMLImageElement | File | Blob | string;
+export type ImageSource = File | Blob;
 
 export interface ConvertOptions {
     format: ImageFormat;
     quality?: number;
 };
-export interface FlipOptions extends ConvertOptions {
+export interface FlipOptions {
     horizontally: boolean;
     vertically: boolean;
 }
-export interface RotateOptions extends ConvertOptions {
+export interface RotateOptions {
     angle: number;
 }
-export interface ResizeOptions extends ConvertOptions {
+export interface ResizeOptions {
     width: number;
     height: number;
 }
-
-export interface ManipulateOptions {
+export interface ImageOptions {
     format: ImageFormat;
     width: number;
     height: number;
-    quality?: number;
-    flipHorizontally?: boolean;
-    flipVertically?: boolean;
-    rotateAngle?: number;
+    quality: number;
+    flipHorizontally: boolean;
+    flipVertically: boolean;
+    rotateAngle: number;
 }
+export interface ManipulateOptions extends Partial<ImageOptions> { }
 
 export async function convert(source: ImageSource, options: ConvertOptions): Promise<Blob> {
-    const image: HTMLImageElement = await loadImage(source);
-    const manipulateOptions: ManipulateOptions = {
-        ...options,
-        width: image.width,
-        height: image.height
-    }
-    return await manipulate(source, manipulateOptions);
+    return await manipulate(source, options);
 }
 
 export async function flip(source: ImageSource, options: FlipOptions): Promise<Blob> {
-    const image: HTMLImageElement = await loadImage(source);
     const manipulateOptions: ManipulateOptions = {
-        ...options,
-        width: image.width,
-        height: image.height,
         flipHorizontally: options.horizontally,
         flipVertically: options.vertically,
     }
@@ -50,11 +40,7 @@ export async function flip(source: ImageSource, options: FlipOptions): Promise<B
 }
 
 export async function rotate(source: ImageSource, options: RotateOptions): Promise<Blob> {
-    const image: HTMLImageElement = await loadImage(source);
     const manipulateOptions: ManipulateOptions = {
-        ...options,
-        width: image.width,
-        height: image.height,
         rotateAngle: options.angle,
     }
     return await manipulate(source, manipulateOptions);
@@ -66,7 +52,9 @@ export async function resize(source: ImageSource, options: ResizeOptions): Promi
 
 export async function manipulate(source: ImageSource, options: ManipulateOptions): Promise<Blob> {
     const image: HTMLImageElement = await loadImage(source);
-    const { format, width, height, quality = 0.9, flipHorizontally = false, flipVertically = false, rotateAngle = 0 } = options;
+
+    const defaultOptions = getDefaultOptions(source, image);
+    const { format, width, height, quality, flipHorizontally, flipVertically, rotateAngle } = { ...defaultOptions, ...options };
 
     const [canvas, context] = createCanvas(width, height);
 
@@ -87,19 +75,24 @@ export async function manipulate(source: ImageSource, options: ManipulateOptions
 }
 
 export async function loadImage(source: ImageSource): Promise<HTMLImageElement> {
-    if (source instanceof HTMLImageElement) return source;
-
     return new Promise((resolve, reject) => {
         const image: HTMLImageElement = new Image();
-        if (typeof source !== 'string') {
-            image.src = URL.createObjectURL(source);
-        } else {
-            image.crossOrigin = 'anonymous';
-            image.src = source;
-        }
+        image.src = URL.createObjectURL(source);
         image.onload = () => resolve(image);
         image.onerror = (e) => reject(new Error(`Failed to load image: ${e}`));
     });
+}
+
+export function getDefaultOptions(source: ImageSource, image: HTMLImageElement): ImageOptions {
+    return {
+        format: source.type as ImageFormat,
+        width: image.width,
+        height: image.height,
+        quality: 1,
+        flipHorizontally: false,
+        flipVertically: false,
+        rotateAngle: 0,
+    }
 }
 
 type Canvas = HTMLCanvasElement | OffscreenCanvas;
