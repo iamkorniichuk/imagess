@@ -53,8 +53,14 @@ async function canvasToBlob(canvas: Canvas, options: ConvertOptions): Promise<Bl
     const { format, quality } = options;
 
     if (canvas instanceof HTMLCanvasElement) {
-        return await new Promise<Blob>((resolve) => {
-            canvas.toBlob(b => resolve(b as Blob), format, quality);
+        return await new Promise<Blob>((resolve, reject) => {
+            canvas.toBlob(b => {
+                if (!b) {
+                    reject(new Error(`The "${format}" is not supported by the browser`));
+                } else {
+                    resolve(b as Blob);
+                }
+            }, format, quality);
         });
     } else {
         return await canvas.convertToBlob({ type: format, quality })
