@@ -13,8 +13,7 @@ export interface ResizeOptions extends ConvertOptions {
 export async function convert(source: ImageSource, options: ConvertOptions): Promise<Blob> {
     const image: HTMLImageElement = await loadImage(source);
     const resizeOptions: ResizeOptions = {
-        format: options.format,
-        quality: options.quality,
+        ...options,
         width: image.width,
         height: image.height
     }
@@ -28,10 +27,7 @@ export async function resize(source: ImageSource, options: ResizeOptions): Promi
     const [canvas, context] = createCanvas(width, height);
     context.drawImage(image, 0, 0, width, height);
 
-    const blob = await new Promise<Blob>((resolve) => {
-        canvas.toBlob(b => resolve(b as Blob), format, quality);
-    });
-    return blob;
+    return await canvasToBlob(canvas, { format, quality });
 }
 
 export async function loadImage(source: ImageSource): Promise<HTMLImageElement> {
@@ -50,12 +46,36 @@ export async function loadImage(source: ImageSource): Promise<HTMLImageElement> 
     });
 }
 
-function createCanvas(width: number, height: number): [HTMLCanvasElement, CanvasRenderingContext2D] {
-    const canvas = document.createElement('canvas');
-    canvas.width = width;
-    canvas.height = height;
-    const context = canvas.getContext('2d');
-    if (!context) throw new Error('Failed to create 2D context');
+type Canvas = HTMLCanvasElement | OffscreenCanvas;
+type CanvasContext2D = OffscreenCanvasRenderingContext2D | CanvasRenderingContext2D;
 
+async function canvasToBlob(canvas: Canvas, options: ConvertOptions): Promise<Blob> {
+    const { format, quality } = options;
+
+    if (canvas instanceof HTMLCanvasElement) {
+        return await new Promise<Blob>((resolve) => {
+            canvas.toBlob(b => resolve(b as Blob), format, quality);
+        });
+    } else {
+        return await canvas.convertToBlob({ type: format, quality })
+    }
+}
+
+function createCanvas(width: number, height: number): [Canvas, CanvasContext2D] {
+    let canvas: Canvas;
+    let context: CanvasContext2D | null;
+
+    if (typeof OffscreenCanvas !== 'undefined') {
+        canvas = new OffscreenCanvas(width, height);
+        context = (canvas as OffscreenCanvas).getContext('2d');
+    } else {
+        const canvasElement = document.createElement('canvas');
+        canvasElement.width = width;
+        canvasElement.height = height;
+        canvas = canvasElement;
+        context = canvasElement.getContext('2d');
+    }
+
+    if (!context) throw new Error('Failed to create 2D context');
     return [canvas, context];
 }
