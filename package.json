@@ -29,5 +29,8 @@
   "homepage": "https://github.com/iamkorniichuk/imagess#readme",
   "devDependencies": {
     "typescript": "^5.6.3"
+  },
+  "dependencies": {
+    "@types/offscreencanvas": "^2019.7.3"
   }
 }
