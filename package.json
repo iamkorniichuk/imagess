@@ -1,6 +1,6 @@
 {
   "name": "imagess",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Client-side image manipulator",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -29,5 +29,8 @@
   "homepage": "https://github.com/iamkorniichuk/imagess#readme",
   "devDependencies": {
     "typescript": "^5.6.3"
+  },
+  "dependencies": {
+    "@types/offscreencanvas": "^2019.7.3"
   }
 }
