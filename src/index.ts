@@ -41,3 +41,5 @@ export async function resize(source: ImageSource, options: ResizeOptions): Promi
 }
 
 export { ManipulateOptions, manipulate } from "./manipulate";
+export * from "./image";
+export * from "./canvas";
