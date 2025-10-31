@@ -1,6 +1,6 @@
 # imagess
 
-A lightweight library for **resizing** and **converting image formats** directly in the browser using the Canvas API.
+A lightweight library for **manipulating** images directly in the browser using the Canvas API.
 
 ## Installation
 
