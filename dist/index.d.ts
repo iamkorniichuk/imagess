@@ -19,3 +19,5 @@ export declare function flip(source: ImageSource, options: FlipOptions): Promise
 export declare function rotate(source: ImageSource, options: RotateOptions): Promise<Blob>;
 export declare function resize(source: ImageSource, options: ResizeOptions): Promise<Blob>;
 export { ManipulateOptions, manipulate } from "./manipulate";
+export * from "./image";
+export * from "./canvas";

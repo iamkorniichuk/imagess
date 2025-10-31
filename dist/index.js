@@ -20,3 +20,5 @@ export async function resize(source, options) {
     return await manipulate(source, options);
 }
 export { manipulate } from "./manipulate";
+export * from "./image";
+export * from "./canvas";
